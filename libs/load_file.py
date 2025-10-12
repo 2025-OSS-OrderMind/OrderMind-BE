@@ -1,9 +1,14 @@
-def load_chatlog(filename: str)->list:
+import os
+
+def load_chatlog(file_path: str)->list:
     """
     채팅 로그 파일을 불러오는 함수
-    Args:filename (str): 불러올 파일 경로
+    Args:file_path (str): 불러올 파일 경로
     """
-    with open(filename, 'r', encoding='utf-8') as f:
+    with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
-    return lines
+    
+    file_name = os.path.splitext(os.path.basename(file_path))[0]  # 파일 이름만 추출 (확장자 제외)
+
+    return lines, file_name
 
