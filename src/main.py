@@ -1,16 +1,16 @@
-#from libs.preprocess_utils import *
+from libs.preprocess_utils import *
 import pandas as pd
 from libs.load_file import load_csv
 from libs.filtering_utils import *
 
 
-'''
+
 # 제일 먼저 전처리를 하는 단계입니다. csv 파일로 저장됩니다.
 
 df = processing_chatlog("./test_data/Talk_2025.8.8 21_50-1.txt")
 
 df.to_csv("./temp.csv", index=False, encoding="utf-8-sig")
-'''
+
 
 df = load_csv("temp.csv") # csv 파일을 불러옵니다.
 
