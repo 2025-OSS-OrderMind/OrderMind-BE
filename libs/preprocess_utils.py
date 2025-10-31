@@ -1,6 +1,5 @@
 import re
 import pandas as pd
-import os
 
 from .load_file import load_chatlog
 
@@ -9,7 +8,20 @@ def processing_chatlog(file_path:str) -> pd.DataFrame:
     채팅 파일을 불러오고 전처리하는 함수
     Args:file_path (str): 확인할 파일 경로
     """
-    lines, file_name = load_chatlog(file_path)
+    # --------------------------
+    import libs.datetime_utils as dt_utils
+
+    chat_data, file_name = load_chatlog(file_path)
+    talk_list = []
+    for line in chat_data:
+        if dt_utils.check_datetime_format(line):
+            talk_list.append(line.strip())
+        elif dt_utils.delete_datetime_format(line):
+            continue
+        else:
+            if talk_list:
+                talk_list[-1] += " " + line.strip()
+    # -------------------------
 
     data = []
 
@@ -23,7 +35,8 @@ def processing_chatlog(file_path:str) -> pd.DataFrame:
         "이모티콘",
         "님이 들어왔습니다",
         "님이 나갔습니다",
-        "메시지를 가렸습니다"
+        "메시지를 가렸습니다",
+        "0원"   # 대화 내용에 예시:8900원 5000원 이런 식으로 가격이 언급되어 있는 경우가 있어서 필터링 해야 함.
     ]
 
     exclude_nickname_keywords = [
@@ -31,7 +44,7 @@ def processing_chatlog(file_path:str) -> pd.DataFrame:
         "오픈채팅봇"
     ]
 
-    for line in lines:
+    for line in talk_list:
         match = pattern.match(line.strip())
         if match:
             datetime = match.group(1)
