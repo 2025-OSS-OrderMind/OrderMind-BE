@@ -61,5 +61,6 @@ def processing_chatlog(file_path:str) -> pd.DataFrame:
 
     # DataFrame으로 변환
     df = pd.DataFrame(data, columns=["날짜시간", "닉네임", "채팅내용"])
+    df["날짜시간"] = pd.to_datetime(df["날짜시간"], format="%Y. %m. %d. %H:%M")
     
     return df
