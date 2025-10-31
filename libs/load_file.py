@@ -1,3 +1,4 @@
+import pandas as pd
 import os
 
 def load_chatlog(file_path: str)->list:
@@ -12,3 +13,11 @@ def load_chatlog(file_path: str)->list:
 
     return lines, file_name
 
+def load_csv(file_path: str) -> pd.DataFrame:
+    """
+    csv파일을 불러오는 함수
+    Args:file_path (str): 불러올 파일 경로
+    """
+    df = pd.read_csv(file_path)
+    df["날짜시간"] = pd.to_datetime(df["날짜시간"], format="%Y. %m. %d. %H:%M", errors="coerce")
+    return df
