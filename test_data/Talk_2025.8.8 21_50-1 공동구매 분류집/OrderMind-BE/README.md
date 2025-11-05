@@ -1,3 +1,0 @@
-# OrderMind-BE
-
-OrderMind BackEnd
