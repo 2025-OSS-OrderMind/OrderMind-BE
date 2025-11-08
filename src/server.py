@@ -62,11 +62,11 @@ async def upload_file(
 
     # main.py에 파일경로와 item json문자열을 인자로 전달
     command = [sys.executable,"-m", "src.main", save_path, item_data] 
-    result = subprocess.run(
+    result = subprocess.Popen( #비동기적으로 main.py 실행
         command, # 실행할 명령어
         capture_output=True,# main.py의 print() 출력을 캡처함
-        text=True,
-        encoding='utf-8', #출력 인코딩 설정
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
         cwd=project_root #main.py가 실행될 디렉토리 설정
     )
     def safe_decode(data: bytes) -> str:
