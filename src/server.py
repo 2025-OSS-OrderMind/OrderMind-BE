@@ -62,30 +62,33 @@ async def upload_file(
 
     # main.py에 파일경로와 item json문자열을 인자로 전달
     command = [sys.executable,"-m", "src.main", save_path, item_data] 
-    result = subprocess.Popen( #비동기적으로 main.py 실행
-        command, # 실행할 명령어
-        capture_output=True,# main.py의 print() 출력을 캡처함
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        cwd=project_root #main.py가 실행될 디렉토리 설정
-    )
-    def safe_decode(data: bytes) -> str:
-        if isinstance(data, bytes):
-            return data.decode('utf-8', errors='replace')
-        return data
+
+    print(f"--- 실행 명령어: {' '.join(command)} ---")
+    print(f"--- 작업 디렉토리: {project_root} ---")
+
     
-    stdout_decoded = safe_decode(result.stdout) # main.py의 출력 디코딩
-    stderr_decoded = safe_decode(result.stderr) # main.py의 에러 디코딩
-
-    print("--- main.py STDOUT ---")
-    print(stdout_decoded) # main.py의 표준출력 출력
-    if stderr_decoded.strip():
-        print("--- main.py STDERR (에러) ---")
-        print(stderr_decoded)
-
-    return {
-        "message": f"{file.filename} 파일이 temp 폴더에 저장되었습니다.",
-        "received_item_data": item
-    }
+    try:
+        # 비동기 실행 (백그라운드에서 실행하고 즉시 반환)
+        process = subprocess.Popen(
+            command,
+            stdout=None,  
+            stderr=None, 
+            cwd=project_root,
+            text=True  # 자동 문자열 디코딩
+        )
+        
+        print(f"--- main.py 백그라운드 실행 시작 (PID: {process.pid}) ---")
+        
+        # 즉시 응답 반환 (프로세스는 백그라운드에서 계속 실행)
+        return {
+            "message": f"{file.filename} 파일 업로드 완료. 백그라운드에서 처리 중입니다.",
+            "received_item_data": item.model_dump(),
+            "process_id": process.pid,
+            "status": "processing"
+        }
+        
+    except Exception as e:
+        print(f"--- main.py 실행 중 오류: {e} ---")
+        return {"error": f"main.py 실행 오류: {str(e)}"}
 
 
