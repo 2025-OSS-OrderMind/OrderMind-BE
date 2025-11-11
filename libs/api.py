@@ -72,14 +72,14 @@ def call_google_genai_api(api_key: str, prompt_text: str) -> Optional[str]:
             contents=prompt_text,
             config={
                 "temperature": 0.7, 
-                "max_output_tokens": 2048
+                "max_output_tokens": 2048 
             }
         )
         
         ai_response_string = response.text
         return ai_response_string
         
-    except errors.APIError as api_e: # 'genai.APIError'가 아니라 'errors.APIError' 입니다.
+    except errors.APIError as api_e:
         print(f"\n--- Google GenAI API 오류 발생 (APIError): {api_e} ---")
         return None
         
