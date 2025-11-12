@@ -6,10 +6,13 @@ import subprocess
 import sys
 
 """ 구조체 정의 """
+class ItemDetail(BaseModel):
+    name: str                
+    keywords: list[str]
+
 class Item(BaseModel):
-    date1: str
-    date2: str
-    item_list: list[str]
+    date_range: dict[str, str]  #  예: {"start": "2023-01-01", "end": "2023-01-31"}
+    items : list[ItemDetail]  # 예: [{"name": "Item1", "keywords": ["keyword1", "keyword2"]}, ...]
 
 app = FastAPI()
 
@@ -40,9 +43,9 @@ async def upload_file(
     #--------------디버그 용--------------------------
     print(f"파일이름: {file.filename})")
     print(f"파일 사이즈:{len(contents)} bytes")
-    print(f"Date1: {item.date1}")
-    print(f"Date2: {item.date2}")
-    print(f"Item List: {item.item_list}")
+    print(f"Date1: {item.date_range['start']}")
+    print(f"Date2: {item.date_range['end']}")
+    print(f"Item List: {item.items}")
 
 
     save_path = os.path.join(TEMP_FOLDER, file.filename) #저장할 폴더 설정
