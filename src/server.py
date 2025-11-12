@@ -1,5 +1,5 @@
 from fastapi import FastAPI 
-from pydantic import BaseModel  #구조체 정의를 위해 import
+from pydantic import BaseModel,Field  #구조체 정의를 위해 import
 from fastapi import File, UploadFile, Form 
 import os #파일 및 디렉토리 작업을 위한 os 모듈
 import subprocess 
@@ -8,11 +8,11 @@ import sys
 """ 구조체 정의 """
 class ItemDetail(BaseModel):
     name: str                
-    keywords: list[str]
+    keywords: list[str] = Field(default_factory=list) #키워드 리스트, 기본값은 빈 리스트
 
 class Item(BaseModel):
     date_range: dict[str, str]  #  예: {"start": "2023-01-01", "end": "2023-01-31"}
-    items : list[ItemDetail]  # 예: [{"name": "Item1", "keywords": ["keyword1", "keyword2"]}, ...]
+    items : list[ItemDetail] = Field(default_factory=list)
 
 app = FastAPI()
 
@@ -93,5 +93,4 @@ async def upload_file(
     except Exception as e:
         print(f"--- main.py 실행 중 오류: {e} ---")
         return {"error": f"main.py 실행 오류: {str(e)}"}
-
 
