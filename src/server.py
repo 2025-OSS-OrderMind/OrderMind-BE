@@ -4,20 +4,22 @@ from fastapi import File, UploadFile, Form
 import os #파일 및 디렉토리 작업을 위한 os 모듈
 import subprocess 
 import sys
+import uuid #고유 파일 이름 생성을 위한 uuid 모듈
+import threading
 
 """ 구조체 정의 """
 class ItemDetail(BaseModel):
     name: str                
-    keywords: list[str] = Field(default_factory=list) #키워드 리스트, 기본값은 빈 리스트
+    keywords: list[str] | list[None] #키워드 리스트, 기본값은 빈 리스트
 
 class Item(BaseModel):
     date_range: dict[str, str]  #  예: {"start": "2023-01-01", "end": "2023-01-31"}
-    items : list[ItemDetail] = Field(default_factory=list)
+    items : list[ItemDetail] | list[None]  # ItemDetail 객체의 리스트, 기본값은 빈 리스트
 
 app = FastAPI()
 
-TEMP_FOLDER = "temp" 
-os.makedirs(TEMP_FOLDER, exist_ok=True) #폴더 없을시에 생성
+RESULTS_FOLDER = "results" 
+os.makedirs(RESULTS_FOLDER, exist_ok=True)
 
 # 첫 화면 동작 확인
 @app.get("/")
@@ -30,6 +32,7 @@ async def upload_file(
     file: UploadFile = File(...), 
     item_data: str = Form(...)  # Pydantic 모델을 문자열로 받습니다. (이름을 item -> item_data로 변경)
 ):
+    
     try:
         item = Item.model_validate_json(item_data) #json 문자열을 Pydantic 모델로 파싱
     except Exception as e:
@@ -48,7 +51,10 @@ async def upload_file(
     print(f"Item List: {item.items}")
 
 
-    save_path = os.path.join(TEMP_FOLDER, file.filename) #저장할 폴더 설정
+    process_id = str(uuid.uuid4()) #고유 프로세스 ID 생성   
+    process_folder_path = os.path.join(RESULTS_FOLDER, process_id) #프로세스별 결과 폴더 경로
+    os.makedirs(process_folder_path, exist_ok=True) #프로세스별 결과 폴더 생성
+    save_path = os.path.join(process_folder_path, file.filename) #저장할 파일 경로
 
     try: #cp949형식일 경우'utf-8' 형식으로 파일에 저장
         decoded_contents = contents.decode('cp949')
@@ -59,13 +65,9 @@ async def upload_file(
             buffer.write(contents)
 
 
-    script_dir = os.path.dirname(os.path.abspath(__file__)) # 현재 스크립트 디렉토리 경로
-    project_root = os.path.dirname(script_dir) # mian.py 디렉토리 경로
-
-
     # main.py에 파일경로와 item json문자열을 인자로 전달
     command = [sys.executable,"-m", "src.main", save_path, item_data] 
-
+    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) #프로젝트 루트 디렉토리 경로
     print(f"--- 실행 명령어: {' '.join(command)} ---")
     print(f"--- 작업 디렉토리: {project_root} ---")
 
@@ -74,19 +76,30 @@ async def upload_file(
         # 비동기 실행 (백그라운드에서 실행하고 즉시 반환)
         process = subprocess.Popen(
             command,
-            stdout=None,  
-            stderr=None, 
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
             cwd=project_root,
-            text=True  # 자동 문자열 디코딩
-        )
-        
-        print(f"--- main.py 백그라운드 실행 시작 (PID: {process.pid}) ---")
-        
+            text=True,
+            encoding='utf-8', # 출력 인코딩 설정
+            errors='replace', # 인코딩 오류 발생 시 대체 문자로 처리
+        )   
+
+        print("STDOUT PIPE:", process.stdout)
+        print("STDERR PIPE:", process.stderr)
+        print("Process running?", process.poll())
+        def stream_reader(stream, name):
+            for line in iter(stream.readline, ''):
+                print(f"[{name}] {line}", flush=True)
+
+        threading.Thread(target=stream_reader, args=(process.stdout, "STDOUT"), daemon=True).start()
+        threading.Thread(target=stream_reader, args=(process.stderr, "STDERR"), daemon=True).start()
+
+        sys.stdout.flush()
         # 즉시 응답 반환 (프로세스는 백그라운드에서 계속 실행)
         return {
             "message": f"{file.filename} 파일 업로드 완료. 백그라운드에서 처리 중입니다.",
             "received_item_data": item.model_dump(),
-            "process_id": process.pid,
+            "process_id": process_id,
             "status": "processing"
         }
         

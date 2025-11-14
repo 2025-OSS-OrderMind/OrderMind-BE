@@ -30,12 +30,12 @@ def call_local_ai_server(LM_STUDIO_URL:str, API_KEY:str, prompt_text:str)-> str 
     }
 
     data = {
-        "model": "gemma-3-1b-it", # LM Studio에 로드된 모델 이름으로 변경 
+        "model": "google/gemma-3-1b", # LM Studio에 로드된 모델 이름으로 변경 
         "messages": [
             {"role": "user", "content": prompt_text} #생성한 주체, 내용
         ],
         "temperature": 0.7, #창의성 조절(0~1)
-        "max_tokens": 512 #생성할 최대 토큰 수(변경가능)
+        "max_tokens": 2048 #생성할 최대 토큰 수(변경가능)
     }
     print(f"로컬 서버({LM_STUDIO_URL})에 요청 중...")
     
@@ -46,8 +46,10 @@ def call_local_ai_server(LM_STUDIO_URL:str, API_KEY:str, prompt_text:str)-> str 
         response.raise_for_status() 
         # 응답 받은 JSON 데이터를 파이썬 딕셔너리로 변환
         response_json = response.json()
-        ai_response_string = response_json['choices'][0]['message']['content']
-        return ai_response_string
+        result = response_json['choices'][0]['message']['content']
+        result = result.replace("```","").replace('json',"").strip()
+
+        return result
     # --- 예외 처리 ---
     except requests.exceptions.RequestException as e:  #api 통신 오류 
         print(f"\n--- API 통신 오류 발생 ---")
