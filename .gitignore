@@ -1,6 +1,9 @@
 # key.env 무시
 key.env
 
+# results 폴더
+results/
+
 #가상환경 파일 제외
 venv/
 .venv/
