@@ -1,12 +1,27 @@
 from fastapi import FastAPI 
 from pydantic import BaseModel,Field  #구조체 정의를 위해 import
 from fastapi import File, UploadFile, Form 
-from libs.schemas import Item
 import os #파일 및 디렉토리 작업을 위한 os 모듈
 import subprocess 
 import sys
 import uuid #고유 파일 이름 생성을 위한 uuid 모듈
 import threading
+
+
+class ItemDetail(BaseModel):
+    name: str                
+    keywords: list[str] | list[None] #키워드 리스트, 기본값은 빈 리스트
+
+class IgnoreDetail(BaseModel):
+    name: str
+    keywords: str | None = None
+
+class Item(BaseModel):
+    date_range: dict[str, str]  #  예: {"start": "2023-01-01", "end": "2023-01-31"}
+    items : list[ItemDetail] | list[None]  # ItemDetail 객체의 리스트, 기본값은 빈 리스트
+    ignore_items : list[IgnoreDetail] | None
+    email_address : str
+
 
 app = FastAPI()
 
