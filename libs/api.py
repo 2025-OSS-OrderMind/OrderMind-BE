@@ -14,6 +14,43 @@ LM_STUDIO_URL = "http://localhost:1234/v1" #예시: 실제 주소로 변경
 API_KEY = os.environ.get("GEMINI_API_KEY")
 #--------------------------------------------------
 
+#---------------클라이언트 초기화--------------------- 
+
+client = OpenAI() # 자동으로 OPENAI_API_KEY가 할당된다
+
+#-------------------------------------------------
+
+#---------------------OpenAI API 호출 함수------------------------
+def call_openai_api(prompt_text: str) -> Optional[str]:
+    """
+    OpenAI API를 사용합니다.
+    """
+
+    client = OpenAI() # 자동으로 OPENAI_API_KEY가 할당된다
+
+    response = client.responses.create(
+    model='gpt-4o-mini',
+    input=[
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": prompt_text
+        }
+      ]
+    }
+  ],
+    text={
+        "format": {
+        "type": "text"
+        }
+    },
+    temperature=0.2,
+    max_output_tokens=3000
+    )
+
+    return response.output_text
 
 def call_local_ai_server(LM_STUDIO_URL:str, API_KEY:str, prompt_text:str)-> str | None:
     """
@@ -101,7 +138,7 @@ def call_google_genai_api(api_key: str, prompt_text: str) -> Optional[str]:
 # #--------------------------------------
 
 # # --- 함수 사용 예시 -----------------
-
+'''
 user_prompt = input("AI에게 보낼 프롬프트를 입력하세요: ")
 result = call_google_genai_api(API_KEY, user_prompt)
 if result: #결과가 None이 아닐 경우
@@ -110,3 +147,10 @@ if result: #결과가 None이 아닐 경우
     print(result)
 else:
     print("Google GenAI API 호출에 실패했습니다.")
+'''
+
+
+if __name__ == '__main__': # OpenAI API 테스트 용
+    print(call_openai_api("API 테스트입니다: 안녕 너는 누구야?"))
+
+    # print(call_openai_api(build_prompt(...)))

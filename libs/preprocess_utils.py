@@ -61,5 +61,10 @@ def processing_chatlog(file_path:str) -> pd.DataFrame:
 
     # DataFrame으로 변환
     df = pd.DataFrame(data, columns=["날짜시간", "닉네임", "채팅내용"])
+    df['날짜시간'] = pd.to_datetime(df['날짜시간'])
+
+    # 이 행은 처리가 된 행이라는 것을 저장하는 processed열을 생성
+    df['processed'] = False
+
     
     return df

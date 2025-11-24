@@ -8,6 +8,8 @@ from email.utils import formataddr
 import os
 # 위 패키지들은 기본 파이썬에 내장된 패키지들이기 때문에 requirements.txt를 수정할 필요가 없음
 
+GMAIL_PASSWORD = os.environ.get("GMAIL_PASSWORD")
+
 def send_email(sender_email, sender_name, receiver_email, subject, body, password, attachments=[]):
     '''
     ### 매개 변수
