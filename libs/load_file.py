@@ -19,5 +19,9 @@ def load_csv(file_path: str) -> pd.DataFrame:
     Args:file_path (str): 불러올 파일 경로
     """
     df = pd.read_csv(file_path, encoding="utf-8-sig")
-    df["날짜시간"] = pd.to_datetime(df["날짜시간"], format="%Y. %m. %d. %H:%M", errors="coerce")
+    df["날짜시간"] = pd.to_datetime(df["날짜시간"])
+
+    # 이 행은 처리가 된 행이라는 것을 저장하는 processed열을 생성
+    df['processed'] = False
+
     return df

@@ -23,13 +23,15 @@ except Exception as e:
 
 folder_path = os.path.dirname(data_file_path)
 output_csv = os.path.join(folder_path, "temp.csv")
+
+
 print(f"--- [Debug] 데이터 파일 경로: {data_file_path} ---")
 #-----------------채팅로그 전처리 테스트 코드------------------------
 data_file_path = data_file_path.replace("\\", "/") #경로 구분자 통일
 print(f"--- [Debug] 수정된 데이터 파일 경로: {data_file_path} ---")
 #제일 먼저 전처리를 하는 단계입니다. csv 파일로 저장됩니다.
 df = processing_chatlog(data_file_path)
-df.to_csv(output_csv, index=False, encoding="utf-8-sig")
+df.to_csv(output_csv, index=False, encoding="utf-8-sig")  # 랜덤 아이디로 이루어진 이름의 폴더 안에 temp.csv를 생성.
 
 
 # CSV에서 읽어온 '날짜시간' 컬럼(문자열)을 
@@ -41,11 +43,12 @@ df['날짜시간'] = pd.to_datetime(df['날짜시간']) # '날짜시간' 컬럼�
 start_data = item_data["date_range"]["start"]
 end_data = item_data["date_range"]["end"]
 
+items = item_data["items"][:]["name"]
 
 # 날짜 문자열을 입력 받아오고 pd.to_datetime 함수로 DataFrame을 마스킹할 Timestamp를 만들어줍니다.
-start = pd.to_datetime(start_data, format="%Y. %m. %d. %H:%M")
-end = pd.to_datetime(end_data, format="%Y. %m. %d. %H:%M")
-start
+start = pd.to_datetime(start_data)
+end = pd.to_datetime(end_data)
+
 # 라이브러리에다가 만든 필터링 함수를 사용하여 날짜 사이의 채팅 데이터를 필터링해 가져옵니다.
 date_filtered = filter_by_date_range(df, start, end)
 
@@ -123,7 +126,7 @@ if id_list:
 
 print(matched_messages, '\033[96m' + 'id_list에 있는 ID가 채팅내용에 포함된 메시지 리스트입니다.' + '\033[0m', sep='\n', flush=True)
 
-
+'''
 while True:
     try:
         for i in range(2):  # 테스트로 처음 5개 메시지만 AI 서버에 전송
@@ -135,7 +138,7 @@ while True:
     except KeyboardInterrupt:
         print("\n프로그램을 종료합니다.")
         break
-
+'''
 # while True:
 #     try:
         
@@ -155,6 +158,5 @@ while True:
 #     except KeyboardInterrupt:
 #         print("\n프로그램을 종료합니다.")
 #         break
-
 
 
