@@ -1,4 +1,6 @@
 from fastapi import FastAPI 
+from fastapi.middleware.cors import CORSMiddleware
+
 from pydantic import BaseModel,Field  #구조체 정의를 위해 import
 from fastapi import File, UploadFile, Form 
 import os #파일 및 디렉토리 작업을 위한 os 모듈
@@ -6,6 +8,7 @@ import subprocess
 import sys
 import uuid #고유 파일 이름 생성을 위한 uuid 모듈
 import threading
+
 
 """ 구조체 정의 """
 class ItemDetail(BaseModel):
@@ -16,7 +19,26 @@ class Item(BaseModel):
     date_range: dict[str, str]  #  예: {"start": "2023-01-01", "end": "2023-01-31"}
     items : list[ItemDetail] | list[None]  # ItemDetail 객체의 리스트, 기본값은 빈 리스트
 
-app = FastAPI()
+app = FastAPI(
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None
+)
+
+origins = [
+    'http://localhost:5173',
+    'https://localhost:5173',
+    'http://order-mind.github.io/'
+    'https://order-mind.github.io/'
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_methods=['GET', 'POST'],
+    allow_headers=['*']
+)
+
 
 RESULTS_FOLDER = "results" 
 os.makedirs(RESULTS_FOLDER, exist_ok=True)
@@ -66,7 +88,7 @@ async def upload_file(
 
 
     # main.py에 파일경로와 item json문자열을 인자로 전달
-    command = [sys.executable,"-m", "src.main", save_path, item_data] 
+    command = [sys.executable, "u", "-m", "src.main", save_path, item_data] 
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) #프로젝트 루트 디렉토리 경로
     print(f"--- 실행 명령어: {' '.join(command)} ---")
     print(f"--- 작업 디렉토리: {project_root} ---")
