@@ -14,6 +14,8 @@ def processing_chatlog(file_path:str) -> pd.DataFrame:
     chat_data, file_name = load_chatlog(file_path)
     talk_list = []
     for line in chat_data:
+        if "메시지가 삭제되었습니다" in line:
+            continue
         if dt_utils.check_datetime_format(line):
             talk_list.append(line.strip())
         elif dt_utils.delete_datetime_format(line):
@@ -31,6 +33,7 @@ def processing_chatlog(file_path:str) -> pd.DataFrame:
     # 필터링할 키워드 목록(원하면 추가)
     exclude_message_keywords = [
         "삭제된 메시지입니다",
+        "메시지가 삭제되었습니다",
         "사진",
         "이모티콘",
         "님이 들어왔습니다",
@@ -50,21 +53,19 @@ def processing_chatlog(file_path:str) -> pd.DataFrame:
             datetime = match.group(1)
             nickname = match.group(2)
             message = match.group(3).strip()
-
+            
             # 불필요한 메시지는 건너뛰기
             if any(kw in message for kw in exclude_message_keywords):
                 continue
             if any(nick in nickname for nick in exclude_nickname_keywords):
                 continue
-
+            
+            message = message.replace('-', ' ')
             data.append([datetime, nickname, message])
 
     # DataFrame으로 변환
     df = pd.DataFrame(data, columns=["날짜시간", "닉네임", "채팅내용"])
     df['날짜시간'] = pd.to_datetime(df['날짜시간'])
-
-    # 이 행은 처리가 된 행이라는 것을 저장하는 processed열을 생성
-    df['processed'] = False
 
     
     return df

@@ -23,6 +23,18 @@ def delete_datetime_format(line:str) -> bool:
     20xx년 x월 x일 x요일 형식인지 확인하는 함수
     Args:line (str): 확인할 문자열
     """
+    # ---- (1) 시스템 메시지 필터링 ----
+    SYSTEM_KEYWORDS = [
+        "님이 나갔습니다",
+        "님이 들어왔습니다",
+        "메시지가 삭제되었습니다",
+        "메시지를 가렸습니다",
+        "오픈채팅 운영시간",
+        "오픈채팅봇",
+        "운영시간"
+    ]
+    if any(kw in line for kw in SYSTEM_KEYWORDS):
+        return True   # 날짜 헤더처럼 취급하여 스킵
     line_list = line.split(',')
     if not line_list:
         return line

@@ -5,6 +5,9 @@ from google import genai
 from typing import Optional
 from google.genai import errors
 from dotenv import load_dotenv
+
+import time, math
+
 # 환경 변수 로드
 load_dotenv("key.env")
 #---------------------예시값----------------------
@@ -14,6 +17,21 @@ LM_STUDIO_URL = "http://localhost:1234/v1" #예시: 실제 주소로 변경
 API_KEY = os.environ.get("GEMINI_API_KEY")
 #--------------------------------------------------
 
+# 타이머 데코레이터
+def timer(fn):
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        result = fn(*args, **kwargs)
+        end = time.perf_counter()
+        print(f"{fn.__name__} 실행 시간: {end - start:.2f}초", end='')
+        if (end-start) / 60 >= 5:
+            print(f'\b (약 {math.ceil((end - start)/60)}분 소요됨)')
+        else:
+            print()
+        return result
+    return wrapper
+
+
 #---------------클라이언트 초기화--------------------- 
 
 client = OpenAI() # 자동으로 OPENAI_API_KEY가 할당된다
@@ -21,15 +39,14 @@ client = OpenAI() # 자동으로 OPENAI_API_KEY가 할당된다
 #-------------------------------------------------
 
 #---------------------OpenAI API 호출 함수------------------------
+@timer
 def call_openai_api(prompt_text: str) -> Optional[str]:
     """
     OpenAI API를 사용합니다.
     """
 
-    client = OpenAI() # 자동으로 OPENAI_API_KEY가 할당된다
-
     response = client.responses.create(
-    model='gpt-4o-mini',
+    model='gpt-5-mini-2025-08-07',
     input=[
     {
       "role": "user",
@@ -40,14 +57,49 @@ def call_openai_api(prompt_text: str) -> Optional[str]:
         }
       ]
     }
-  ],
+    ],
+    reasoning={
+        "summary": "auto",
+        "effort": "low"
+    },
     text={
         "format": {
         "type": "text"
         }
+    }
+    )
+
+    return response.output_text
+
+#---------------------OpenAI API 호출 함수------------------------
+@timer
+def call_openai_api_mini(prompt_text: str) -> Optional[str]:
+    """
+    OpenAI API를 사용합니다.
+    """
+
+    response = client.responses.create(
+    model='gpt-5-mini-2025-08-07',
+    input=[
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": prompt_text
+        }
+      ]
+    }
+    ],
+    reasoning={
+        "summary": "auto",
+        "effort": "low"
     },
-    temperature=0.2,
-    max_output_tokens=3000
+    text={
+        "format": {
+        "type": "text"
+        }
+    }
     )
 
     return response.output_text
@@ -95,6 +147,14 @@ def call_local_ai_server(LM_STUDIO_URL:str, API_KEY:str, prompt_text:str)-> str 
         print(f"\n--- 응답 파싱 오류 발생 ---")
         return None
 
+# # --- 함수 사용 예시 -----------------
+# user_prompt = input("AI에게 보낼 프롬프트를 입력하세요: ")
+# result = call_local_ai_server(LM_STUDIO_URL, API_KEY, user_prompt)
+
+# if result: #결과가 None이 아닐 경우
+#     print("\n--- 로컬 서버 응답 문자열 ---")
+#     print(result)
+# #--------------------------------------
 
 
 #---------------------Google GenAI API 호출 함수------------------------
@@ -125,17 +185,6 @@ def call_google_genai_api(api_key: str, prompt_text: str) -> Optional[str]:
     except Exception as e:
         print(f"\n--- Google GenAI API 통신 오류 발생 (기타): {e} ---")
         return None
-
-
-
-# # --- 함수 사용 예시 -----------------
-# user_prompt = input("AI에게 보낼 프롬프트를 입력하세요: ")
-# result = call_local_ai_server(LM_STUDIO_URL, API_KEY, user_prompt)
-
-# if result: #결과가 None이 아닐 경우
-#     print("\n--- 로컬 서버 응답 문자열 ---")
-#     print(result)
-# #--------------------------------------
 
 # # --- 함수 사용 예시 -----------------
 '''
