@@ -3,7 +3,7 @@ import pandas as pd
 
 from libs.filtering_utils import *
 from libs.preprocess_utils import processing_chatlog
-from .test_json import my_json_2 as my_json
+from .test_json import my_json
 
 from libs.prompt import build_prompt2, build_prompt3
 from libs.api import call_openai_api, call_openai_api_mini, timer
@@ -14,13 +14,9 @@ import sys, io, os
 from collections import OrderedDict
 import re
 
-
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8') #출력 인코딩 설정
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8') #에러 출력 인코딩 설정
-
 #Server.py에서 전달된 인자를 받는 부분입니다.
-data_file_path = sys.argv[1]  # 첫 번째 인자는 업로드된 파일 경로입니다.
-item_json = sys.argv[2]      # 두 번째 인자는 Item JSON 문자열입니다.
+data_file_path = './test_data/Talk_2025.8.8 21_50-1.txt'  # 첫 번째 인자는 업로드된 파일 경로입니다.
+item_json = my_json      # 두 번째 인자는 Item JSON 문자열입니다.
 try: #Json 파싱
     item_data = json.loads(item_json)
 except Exception as e:
@@ -88,7 +84,7 @@ def ai_pipeline(_file_path: str | None = ''):
         item_str = item["name"]
 
         items_column_list.append(item_str)
-
+        
         if (len(item["keywords"])):
             item_str += ":" + ', '.join(item["keywords"])
         
@@ -127,6 +123,9 @@ def ai_pipeline(_file_path: str | None = ''):
     # 날짜 사이로 필터링
     root_df = filter_by_date_range(df, start, end)
 
+    print(root_df.head(10))
+
+    return
     '''ID란 주문 번호로 쓰는 전화번호 뒤에 4자리 입니다.'''
     # 채팅내용에 ID가 등장하는 해당 채팅 데이터들만 필터링하여 가져옵니다.
     id_df = filter_by_4digit(root_df) 
@@ -183,6 +182,10 @@ def ai_pipeline(_file_path: str | None = ''):
                 f.write(customer_chat_df.to_string(index=False))
                 f.write("\n\n")
 
+    file_json_log = os.path.join(folder_path, 'JSON_Log.txt')
+    with open(file_json_log, "w", encoding="utf-8") as f: # 파일 생성 및 내용 초기화
+        f.write(f"")
+
     try:
         customer_count = 0
         i = 1
@@ -210,20 +213,22 @@ def ai_pipeline(_file_path: str | None = ''):
 
                 ai_json = json.loads(ai_response)
         
+            with open(file_json_log, "a", encoding="utf-8") as f: # JSON 로깅
+                f.write(f"닉네임: '{nick}' 이 말한 주문 번호: {order_list}\n")
+                f.write(f"요청된 JSON: {ai_json}\n")
+                f.write("\n")
 
             orders = ai_json["orders"]
+            print(orders)
             
             for order in orders:
                 number = order["number"]
-                items = order["items"]
-
-                if (len(items) < 1):
-                    continue
-                
-                
                 items:str = order["items"]
 
                 number = str(abs(int(number))) # 만약에 번호에 -가 들어간 경우, (-) 부호가 붙여져서 엑셀에 저장되는걸 막기 위해 절댓값으로 치환하여 다시 str로 저장.
+
+                if (len(items) < 1):
+                    continue
 
                 row = {col: "" for col in columns}
                 row['주문번호'] = number
@@ -282,10 +287,6 @@ def ai_pipeline(_file_path: str | None = ''):
         result_df.to_csv(fname_output_csv, index=False, encoding='utf-8-sig')
         sus_df.to_csv(fname_sus_csv, index=False, encoding='utf-8-sig')
 
-        send_email('gm.sinmj@gmail.com', 'OrderMind', '20221995@edu.hanbat.ac.kr', '[OrderMind] 띵동~ 주문 종합이 완료됐어요!', \
-                   f'종합된 총 고객 수는 {customer_count}명이에요.\n\n종합될 때까지 약 {math.ceil((e_time-s_time)/60)}분 정도 소요됐어요!', \
-                    GMAIL_PASSWORD, [fname_output_csv, fname_sus_csv, fname_dup_sus])
-
 
 
         
@@ -293,3 +294,48 @@ def ai_pipeline(_file_path: str | None = ''):
 
 if __name__ == '__main__':
     ai_pipeline()
+
+
+    '''
+
+    for customer_id in id_list: # 사용자 주문번호 목록으로 for 문 시작
+        customer_chat_df = filter_by_4digit(root_df, customer_id)
+
+        users = list(set(customer_chat_df['닉네임'].unique()))
+        if (len(users) > 1):
+            print("해당 주문은 중복 번호가 의심되는 주문번호입니다.")
+            print(users)
+            print(customer_chat_df)
+    
+    for customer_id in id_list: # 사용자 주문번호 목록으로 for 문 시작
+
+        customer_chat_df = filter_by_4digit(root_df, customer_id) # 해당 주문번호가 언급된 행만 필터링 한다.
+
+        if customer_chat_df.empty: # DataFrame이 비어있으면
+            continue
+
+         # 필터링한 df에서 닉네임이 다른 게 있는지 검사하기 위해 닉네임 리스트를 뽑는다.
+        users = list(set(customer_chat_df['닉네임'].unique()))
+
+        if (len(users) > 1): # 닉네임 리스트가 1개 이상이면, 해다 주문번호를 여러 사람이 말했다는 것을 뜻하고 일일이 처리 해봐야 함.
+            # 해당 주문은 중복 번호가 의심되는 주문번호입니다.
+
+            is_sus = False  # AI로 풀기 복잡해지고, 주문번호 및 닉네임 중복 문제가 심각해지면 해당 플래그를 ON합니다.
+
+            for user in users:  # 중복으로 의심되는 닉네임들로 for문을 돕니다.
+                n_df = filter_by_nickname(root_df, user)
+
+                n_id_list = n_df['채팅내용'].str.extractall(r'(\d{4})')[0].to_list() # ID 리스트를 뽑습니다.
+                n_id_list = list(set(n_id_list))
+
+                if (len(n_id_list) > 1):
+                    is_sus = True
+                    break
+
+
+
+                
+                # ai
+            print(users)
+            print(customer_chat_df)
+'''
