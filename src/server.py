@@ -15,9 +15,16 @@ class ItemDetail(BaseModel):
     name: str                
     keywords: list[str] | list[None] #키워드 리스트, 기본값은 빈 리스트
 
+class IgnoreDetail(BaseModel):
+    name: str
+    keywords: str | None = None
+
 class Item(BaseModel):
     date_range: dict[str, str]  #  예: {"start": "2023-01-01", "end": "2023-01-31"}
     items : list[ItemDetail] | list[None]  # ItemDetail 객체의 리스트, 기본값은 빈 리스트
+    ignore_items : list[IgnoreDetail] | None
+    email_address : str
+
 
 app = FastAPI(
     docs_url=None,
@@ -116,7 +123,7 @@ async def upload_file(
         threading.Thread(target=stream_reader, args=(process.stdout, "STDOUT"), daemon=True).start()
         threading.Thread(target=stream_reader, args=(process.stderr, "STDERR"), daemon=True).start()
 
-        sys.stdout.flush()
+        #sys.stdout.flush()
         # 즉시 응답 반환 (프로세스는 백그라운드에서 계속 실행)
         return {
             "message": f"{file.filename} 파일 업로드 완료. 백그라운드에서 처리 중입니다.",
